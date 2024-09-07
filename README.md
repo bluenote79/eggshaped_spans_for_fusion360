@@ -4,7 +4,7 @@
 
 <picture>
 
-  <img alt="">
+  <img alt="https://github.com/bluenote79/eggshaped_spans_for_fusion360/blob/main/eggshaped_spans_for_fusion360/eggs.gif">
 
 </picture>
 
