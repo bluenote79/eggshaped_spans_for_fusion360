@@ -17,5 +17,12 @@ To avoid this when lofting eggshaped spans I am working on this tool.
 3. Right click on the script > Open file location
 4. Overwrite the script with the [skript](https://github.com/bluenote79/eggshaped_spans_for_fusion360/blob/main/eggshaped_spans_for_fusion360/eggshaped_spans_for_fusion360.py) from here.
 
+### Usage
+1. The selectet splines must be top curve, bottom and middle (in that order)
+2. You can chose the number of drawn points which will be multiplied by 4
+3. Select origin Plane.
+4. Choose the distance between spans, this must be a negative number if your splines go to negativ values in the coordinate system
+5. Number of spans with equal distance
+6. Choice to set the first span at 0.0 (only possible if the splines intersect this origin plane.
+7. you can choose to give speciffic offset values seperated by semicolon, then you have to set "Abstand Spanten" to zero.
 
-The selectet splines must be top
