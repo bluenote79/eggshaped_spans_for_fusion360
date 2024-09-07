@@ -4,7 +4,7 @@
 
 <picture>
 
-  <img alt="https://www.rc-network.de/attachments/py-gif.12760077/">
+  <img alt="https://www.rc-network.de/attachments/py-gif">
 
 </picture>
 
