@@ -1,6 +1,6 @@
 # Eggshaped spans for Fusion 360
 
-## This skript adds spans calculated by Hügelschäffer equation to Fusion 360 fittin 3 splines ready for lofting.
+## This skript adds spans calculated by Hügelschäffer equation to Fusion 360 fitting 3 splines ready for lofting.
 
 <picture>
 
