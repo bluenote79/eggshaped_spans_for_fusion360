@@ -1,8 +1,3 @@
-
-
-#Author-
-#Description-
-
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import math as m
 
