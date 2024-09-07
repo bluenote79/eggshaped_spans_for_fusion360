@@ -1,6 +1,11 @@
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import math as m
 
+"""
+This skript adds spans calculated by Hügelschäffer equation to Fusion 360 fitting 3 splines ready for lofting.
+"""
+
+
 # Global set of event handlers to keep them referenced for the duration of the command
 handlers = []
 ui = None
