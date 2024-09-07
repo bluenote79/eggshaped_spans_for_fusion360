@@ -4,7 +4,7 @@
 
 <picture>
 
-  <img alt="https://github.com/bluenote79/eggshaped_spans_for_fusion360/blob/main/eggshaped_spans_for_fusion360/eggs.gif">
+  <img alt="Illustrates usage of eggshaped spans for Fusion 360 script" src="https://github.com/bluenote79/eggshaped_spans_for_fusion360/blob/main/eggshaped_spans_for_fusion360/eggs.gif">
 
 </picture>
 
