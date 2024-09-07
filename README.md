@@ -16,3 +16,6 @@ To avoid this when lofting eggshaped spans I am working on this tool.
 2. Create a new script (chose Script, Python and airfoil_to_line as Script Name
 3. Right click on the script > Open file location
 4. Overwrite the script with the [skript](https://github.com/bluenote79/eggshaped_spans_for_fusion360/blob/main/eggshaped_spans_for_fusion360/eggshaped_spans_for_fusion360.py) from here.
+
+
+The selectet splines must be top
