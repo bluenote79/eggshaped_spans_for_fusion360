@@ -5,8 +5,6 @@ import math as m
 This skript adds spans calculated by Hügelschäffer equation to Fusion 360 fitting 3 splines ready for lofting.
 """
 
-
-# Global set of event handlers to keep them referenced for the duration of the command
 handlers = []
 ui = None
 app = adsk.core.Application.get()
@@ -25,6 +23,17 @@ l_ymax = []
 l_off = []
 l_Plane = []
 
+INPUT_ORIENTIERUNG = ""
+SE01_SELECTION_INPUT_ID = "Spline oben"
+SE02_SELECTION_INPUT_ID = "Spline unten"
+SE03_SELECTION_INPUT_ID = "Spline mitte"
+IN01_VALUE_INPUT_ID = "Anzahl Punkte"
+SE04_SELECTION_INPUT_ID = "Parallele Ursprungsebene"
+IN02_VALUE_INPUT_ID = "Abstand Spanten"
+IN03_VALUE_INPUT_ID ='Anzahl Spanten gleichen Abstands'
+CH01_BOOLEAN_INPUT_ID = 'checkbox'
+IN04_STRING_INPUT_ID = "Spanten semikolngetrennt"
+
 class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
     def __init__(self):
         super().__init__()
@@ -32,14 +41,14 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
         try:
             command = args.firingEvent.sender
             inputs = command.commandInputs
-            input1 = inputs[0];
+            input1 = inputs[0]
             sel0 = input1.selection(0)
-            input2 = inputs[1];
+            input2 = inputs[1]
             sel1 = input2.selection(0)
-            input3 = inputs[2];
+            input3 = inputs[2]
             sel2 = input3.selection(0)
-            input4 = inputs[3];     # number of points / 4
-            input5 = inputs[4];    #plane
+            input4 = inputs[3]     # number of points / 4
+            input5 = inputs[4]   #plane
             sel3 = input5.selection(0)
             input6 = inputs[5]     # abstand
             input7 = inputs[6]      # number of spans
@@ -70,13 +79,13 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
                 l_off.append(temp)
     
             if sel3.entity == root.xYConstructionPlane:
-                input_orientierung = "xY"
+                INPUT_ORIENTIERUNG = "xY"
 
             elif sel3.entity == root.yZConstructionPlane:
-                input_orientierung = "yZ"
+                INPUT_ORIENTIERUNG = "yZ"
                 
             elif sel3.entity == root.xZConstructionPlane:
-                input_orientierung = "xZ"
+                INPUT_ORIENTIERUNG = "xZ"
                 
 
             spline_o = sel0.entity
@@ -86,51 +95,42 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
             entities_o = []
             entities_u = []
             entities_m = []
+
             entities_o.append(spline_o) # sketch curve
             entities_u.append(spline_u)
             entities_m.append(spline_m)
-            entities_all = []
-            entities_all.append(spline_o)
-            entities_all.append(spline_u)
-            entities_all.append(spline_m)
             
-            def intersection_ebene(offset_z, entities_o, entities_u, entities_m, input_orientierung):
+            entities_all = entities_o + entities_u + entities_m                ################## del?
 
-                if input_orientierung == "xY":
+            def intersection_ebene(offset_z, entities_o, entities_u, entities_m, INPUT_ORIENTIERUNG):
+
+                if INPUT_ORIENTIERUNG == "xY":
                     offset_z = -float(offset_z)
                     sketch3d = sketches.add(root.xYConstructionPlane)
-                elif input_orientierung == "yZ":
+                elif INPUT_ORIENTIERUNG == "yZ":
                     offset_z = float(offset_z)
                     sketch3d = sketches.add(root.yZConstructionPlane)
-                elif input_orientierung == "xZ":
+                elif INPUT_ORIENTIERUNG == "xZ":
                     offset_z = float(offset_z)
                     sketch3d = sketches.add(root.xZConstructionPlane)
 
+                # create offset plane
                 planeInput = planes.createInput()
-                # Create three sketch points
-                sketchPoints = sketch3d.sketchPoints
-                positionOne = adsk.core.Point3D.create(0.0, 0.0, offset_z)
-                sketchPointOne = sketchPoints.add(positionOne)
-                positionTwo = adsk.core.Point3D.create(0, 10.0, offset_z)
-                sketchPointTwo = sketchPoints.add(positionTwo)
-                positionThree = adsk.core.Point3D.create(10.0, 10.0, offset_z)
-                sketchPointThree = sketchPoints.add(positionThree)
-                # Add construction plane by three points
-                planeInput.setByThreePoints(sketchPointOne, sketchPointTwo, sketchPointThree)
+                valueInput = adsk.core.ValueInput.createByReal(offset_z)
+                planeInput.setByOffset(sel3.entity, valueInput)
                 planes.add(planeInput)
 
                 plane3d = planes[len(planes) - 1]
-                #l_Plane.append(plane3d)
-                plane3d.name="offset_3_points"
+                plane3d.name="offsetPlane"
 
                 sketch2o = sketches.add(plane3d)
                 sketchEntities_o = sketch2o.intersectWithSketchPlane(entities_o)
 
                 sketch2u = sketches.add(plane3d)
-                sketchEntities_u = sketch2o.intersectWithSketchPlane(entities_u)
+                sketchEntities_u = sketch2u.intersectWithSketchPlane(entities_u)
 
-                sketch2o = sketches.add(plane3d)
-                sketchEntities_m = sketch2o.intersectWithSketchPlane(entities_m)
+                sketch2m = sketches.add(plane3d)
+                sketchEntities_m = sketch2m.intersectWithSketchPlane(entities_m)
 
                 # Get the value of the property.
                 pt_o = []
@@ -165,19 +165,19 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
                 pt_u = list(map(float, pt_u))
                 pt_m = list(map(float, pt_m))
 
-                if input_orientierung == "yZ":
+                if INPUT_ORIENTIERUNG == "yZ":
                     xmax = 1 * pt_o[2]
                     xmin = 1 * pt_u[2]
                     xmit = 1 * pt_m[2]
                     ymax = 1 * pt_m[1]
 
-                elif input_orientierung == "xY": 
+                elif INPUT_ORIENTIERUNG == "xY": 
                     xmax = 1 * pt_o[1]
                     xmin = 1 * pt_u[1]
                     xmit = 1 * pt_m[1]
                     ymax = 1 * pt_m[0]
                 
-                elif input_orientierung == "xZ":
+                elif INPUT_ORIENTIERUNG == "xZ":
                     xmax = 1 * pt_o[2]
                     xmin = 1 * pt_u[2]
                     xmit = 1 * pt_m[2]
@@ -201,7 +201,6 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
                     ents.append(ent)
                     
                 sketch3 = ents[0].parentSketch
-                sketch3.name="Sketch3"
                 Plane = sketch3.referencePlane   
                 Plane = plane3d
                 l_Plane.append(Plane)
@@ -216,19 +215,19 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
                 planes[letzte_ebene].deleteMe()
 
             for i in range(len(l_off)):
-                intersection_ebene(l_off[i], entities_o, entities_u, entities_m, input_orientierung)
+                intersection_ebene(l_off[i], entities_o, entities_u, entities_m, INPUT_ORIENTIERUNG)
 
 
             # execute the calculation programm with the user selected values
             span = Span()
             for i in range(len(l_off)):
-                span.Execute(l_Plane[i], l_xmax[i], l_xmin[i], l_xmit[i], l_ymax[i], input4.value, l_off[i], input_orientierung);
+                span.Execute(l_xmax[i], l_xmin[i], l_xmit[i], l_ymax[i], 4 * input4.value, l_off[i], INPUT_ORIENTIERUNG)
 
         except:
             if ui:
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
-# Event handler that reacts to when the command is destroyed. This terminates the script.
+
 class SpanCommandDestroyHandler(adsk.core.CommandEventHandler):
     def __init__(self):
         super().__init__()
@@ -241,16 +240,75 @@ class SpanCommandDestroyHandler(adsk.core.CommandEventHandler):
             if ui:
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
-class Span:
-    def Execute(self, Plane, xmax, xmin, xmit, ymax, anzahl_punkte_4, offset_z, input_orientierung):
-        x_coord = [] # list of coordinates for spline
-        y_coord = [] # list of coordinates for spline
-  
-        # multiply the input by 4 to get the number of points to be created
-        anzahl_punkte = anzahl_punkte_4 * 4
-        global sketches
-        global planes
 
+class SpanCalc:
+    def __init__(self, xmax, xmin, xmit, ymax, anzahl_punkte):
+
+        self.xmax = xmax
+        self.xmin = xmin
+        self.xmit = xmit
+        self.ymax = ymax
+        self.anzahl_punkte = anzahl_punkte
+        self.xwerte, self.ywerte = self.calc_egg(anzahl_punkte, ymax, xmit, xmin, xmax)
+        self.xwerte_offset = self.move_x(xmax, xmin, self.xwerte)
+          
+    
+    # calculation of the eggshape around the origin → will be moved later
+    @classmethod
+    def calc_egg(cls, anzahl_punkte, ymax, xmit, xmin, xmax):
+
+        a = 0.5 * abs(xmax - xmin)
+        b = abs(ymax)
+        d = xmax - xmit - 0.5 * abs(xmax - xmin)
+        xwerte = []  # lists of the calculated values
+        ywerte = []
+
+        # fritz huegel schaeffer calculation depending on the angle
+        punkt = 0
+        while punkt < anzahl_punkte + 1:  # first and last point identical for a closed spline
+            kreisteiler = 360 / anzahl_punkte
+            t = punkt * kreisteiler  # kreisteiler (example: divider of the circle by 5° angles results in 72 points)
+            if t == 90:  # avoid errors from rounding at the points the spline cuts the splines from the fusselage
+                # shape. Use the original inputs.
+                y = ymax
+            elif t == 270:
+                y = -ymax
+            else:
+                y = b * m.sin(m.radians(t))
+            ywerte.append(y)
+            x = (m.sqrt((a ** 2) - (d ** 2) * ((m.sin(m.radians(t))) ** 2)) + d * m.cos(m.radians(t))) * m.cos(m.radians(t))
+            xwerte.append(x)
+            punkt += 1
+
+
+        return xwerte, ywerte
+
+    # moving the x-values by comparing the calculated top around the origin with the top from the input data
+
+    @classmethod
+    def move_x(cls, xmax, xmin, xwerte):
+
+        xwerte_offset = []
+
+        offset = xmax - xwerte[0]
+
+        for w in range(len(xwerte)):
+            x_new = xwerte[w] + offset
+            xwerte_offset.append(x_new)
+
+        xwerte_offset[0] = xmax
+        xwerte_offset[len(xwerte) - 1] = xmax
+        xwerte_offset[int(0.5 * (len(xwerte)-1))] = xmin
+
+        return xwerte_offset
+    
+    def export(self):
+        return self.xwerte_offset, self.ywerte
+
+             
+class Span:
+    def Execute(self, xmax, xmin, xmit, ymax, anzahl_punkte, offset_z, INPUT_ORIENTIERUNG):
+  
         try:
             root = design.rootComponent
         except RuntimeError:
@@ -259,84 +317,37 @@ class Span:
 
         points = adsk.core.ObjectCollection.create()
 
-        # calculate parameters a, b, d from input coordinates
-        a = 0.5 * abs(xmax - xmin)
-        b = abs(ymax)
+        span_obj = SpanCalc(xmax, xmin, xmit, ymax, anzahl_punkte)
 
-        # moved position off the circle midpoint M1 from (0, 0) bei (x_m1, 0)
-        x_m1 = xmax - a
-        d = -(xmit - x_m1)
+        xwerte_offset, ywerte = SpanCalc.export(span_obj)
 
-        # calculation of the eggshape around the origin → will be moved later
-        xwerte = [] # lists of the calculated values
-        ywerte = []
-        xwerte_offset = []
+        if INPUT_ORIENTIERUNG == "xY":
+                x_coord = [ywerte[i] for i in range(len(ywerte))]
+                y_coord = [xwerte_offset[i] for i in range(len(xwerte_offset))]
+                z_coord = [-1 * offset_z for i in range(len(ywerte))]
+                c_plane = root.xYConstructionPlane
 
-        # fritz huegel schaeffer calculation depending on the angle
-        punkt = 0
-        while punkt < anzahl_punkte + 1:  # first and last point identical for a closed spline
-            kreisteiler = 360 / anzahl_punkte
-            t = punkt * kreisteiler  # kreisteiler (example: divider of the circle by 5° angles results in 72 points)
-            if t == 90:   # avoid errors from rounding at the points the spline cuts the splines from the fusselage shape. Use the original inputs.
-                y2 = ymax
-            elif t == 270:
-                y2 = -ymax
-            else:
-                y2 = b * m.sin(m.radians(t))
-            ywerte.append(y2)
-            x1 = (m.sqrt((a ** 2) - (d ** 2) * ((m.sin(m.radians(t))) ** 2)) + d * m.cos(m.radians(t))) * m.cos(
-                m.radians(t))
-            xwerte.append(x1)
-            punkt += 1
+        elif INPUT_ORIENTIERUNG == "yZ":
+                x_coord = [xwerte_offset[i] for i in range(len(xwerte_offset))]
+                y_coord = [ywerte[i] for i in range(len(ywerte))]
+                z_coord = [offset_z for i in range(len(ywerte))]
+                c_plane = root.yZConstructionPlane
 
-        # moving the x-values by comparing the calculated top around the origin with the top from the input data
-        offset = xmax - xwerte[0]
+        elif INPUT_ORIENTIERUNG == "xZ":
+                x_coord = [ywerte[i] for i in range(len(ywerte))]
+                y_coord = [-1 * xwerte_offset[i] for i in range(len(xwerte_offset))]
+                z_coord = [offset_z for i in range(len(ywerte))]
+                c_plane = root.xZConstructionPlane
 
-        for w in range(len(xwerte)):
-            x_new = xwerte[w] + offset
-            xwerte_offset.append(x_new)
-
-        k = len(xwerte) - 1
-        l = int(0.5*k)
-
-        xwerte_offset[0] = xmax
-        xwerte_offset[k] = xmax
-        xwerte_offset[l] = xmin
-
-        for h in range(len(xwerte)):
-            x_coord.append(ywerte[h])
-            y_coord.append(xwerte_offset[h])
-
-        if input_orientierung == "xY":
-                for i in range(len(x_coord)):
-                    point = adsk.core.Point3D.create(ywerte[i], xwerte_offset[i], -offset_z)         
-                    points.add(point)
+        for i in range(len(x_coord)):
+            point = adsk.core.Point3D.create(x_coord[i], y_coord[i], z_coord[i])         
+            points.add(point)
                     
-                sketch3 = root.sketches.add(root.xYConstructionPlane)
-                sketch3.sketchCurves.sketchFittedSplines.add(points)
+        sketchSpan = root.sketches.add(c_plane)
+        sketchSpan.sketchCurves.sketchFittedSplines.add(points)
+        sketchSpan.name = "span_at_" + str(z_coord * 10) + " mm"
 
-        if input_orientierung == "yZ":
-                for i in range(len(x_coord)):
-                    point = adsk.core.Point3D.create(xwerte_offset[i], ywerte[i], offset_z)           
-                    points.add(point)
-                
-                sketch3 = root.sketches.add(root.yZConstructionPlane)
-                sketch3.sketchCurves.sketchFittedSplines.add(points)
-              
-        if input_orientierung == "xZ":
-                for i in range(len(x_coord)):
-                    point = adsk.core.Point3D.create(ywerte[i], -xwerte_offset[i], offset_z)         
-                    points.add(point)
-                
-                sketch3 = root.sketches.add(root.xZConstructionPlane)
-                sketch3.sketchCurves.sketchFittedSplines.add(points)
 
-        name = "span_at_" + str(offset_z * 10) + " mm"
-
-        sketch3.name=name
-
-# Event handler that reacts when the command definitio is executed which
-# results in the command being created and this event being fired.
 class SpanCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
@@ -360,27 +371,28 @@ class SpanCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 
             # Create the inputs       
 
-            i1 = inputs.addSelectionInput("SketchCurve", "Kurve oben", "Please select curve")
+            i1 = inputs.addSelectionInput(SE01_SELECTION_INPUT_ID, SE01_SELECTION_INPUT_ID, "Select curve")
             i1.addSelectionFilter(adsk.core.SelectionCommandInput.SketchCurves)
             i1.addSelectionFilter(adsk.core.SelectionCommandInput.RootComponents)
-            i2 = inputs.addSelectionInput("SketchCurve", "Kurve unten", "Please select curve")
+            i2 = inputs.addSelectionInput(SE02_SELECTION_INPUT_ID, SE02_SELECTION_INPUT_ID, "Select curve")
             i2.addSelectionFilter(adsk.core.SelectionCommandInput.SketchCurves)
             i2.addSelectionFilter(adsk.core.SelectionCommandInput.RootComponents)
-            i3 = inputs.addSelectionInput("SketchCurve", "Kurve mitte", "Please select curve")
+            i3 = inputs.addSelectionInput(SE03_SELECTION_INPUT_ID, SE03_SELECTION_INPUT_ID, "Select curve")
             i3.addSelectionFilter(adsk.core.SelectionCommandInput.SketchCurves)
             i3.addSelectionFilter(adsk.core.SelectionCommandInput.RootComponents)
-            i4 = inputs.addValueInput('anzahl_punkte_4', '1/4 Punkte Eiform', '', adsk.core.ValueInput.createByReal(9))
-            i5 = inputs.addSelectionInput("ConstructionPlane", "Parallele Ursprungsebene", "Select Plane")
+            i4 = inputs.addValueInput(IN01_VALUE_INPUT_ID, '1/4 Punkte Eiform', '', adsk.core.ValueInput.createByReal(9))
+            i5 = inputs.addSelectionInput(SE04_SELECTION_INPUT_ID, SE04_SELECTION_INPUT_ID, "Select Plane")
             i5.addSelectionFilter(adsk.core.SelectionCommandInput.ConstructionPlanes)
             i5.addSelectionFilter(adsk.core.SelectionCommandInput.RootComponents)
-            i6 = inputs.addValueInput("ValueInput", "Abstand Spanten", "mm", adsk.core.ValueInput.createByReal(0.5))
-            i7 = inputs.addValueInput('anzahl_spans', 'Anzahl Spanten gleichen Abstands', '', adsk.core.ValueInput.createByReal(0))
-            i8 = inputs.addBoolValueInput('checkbox', 'Erster Spant bei 0.0', True, '', False)
-            i9 = inputs.addStringValueInput("Spanten semikolongetrennt", "Offsetwerte, semikolongetrennt in mm", "")
+            i6 = inputs.addValueInput(IN02_VALUE_INPUT_ID, IN01_VALUE_INPUT_ID, "mm", adsk.core.ValueInput.createByReal(0.5))
+            i7 = inputs.addValueInput(IN03_VALUE_INPUT_ID, IN03_VALUE_INPUT_ID, '', adsk.core.ValueInput.createByReal(0))
+            i8 = inputs.addBoolValueInput(CH01_BOOLEAN_INPUT_ID, "Erster Spant bei 0.0", True, '', False)
+            i9 = inputs.addStringValueInput(IN04_STRING_INPUT_ID, 'Offsetwerte, semikolongetrennt in mm', "")
 
         except:
             if ui:
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
 
 def run(context):
     try:
@@ -412,4 +424,3 @@ def run(context):
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
