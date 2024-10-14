@@ -3,7 +3,6 @@ import math as m
 
 """
 This skript adds spans calculated by Hügelschäffer equation to Fusion 360 fitting 3 splines ready for lofting.
-V2 Menues structured
 """
 
 handlers = []
@@ -491,10 +490,25 @@ class SpanCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             deleteButtonInput = tab1ChildInputs.addBoolValueInput('tableDelete', 'Delete', False, '', True)
             tableInput.addToolbarCommandInput(deleteButtonInput)
 
-            
-            
-            tabCmdInput2 = inputs.addTabCommandInput('tab_2', 'Tab 2')
+            tabCmdInput2 = inputs.addTabCommandInput('tab_2', 'Help')
             tab2ChildInputs = tabCmdInput2.children
+
+           
+
+            inst_text1 = """ <p><strong>Instructions:</strong></p> \
+                <p>Select rails from side and topview of the fusselage.\
+                <p>Select the origin plane from which the offset planes are generated.</p> \
+                <p>Either choose to create spans of equal distance or manually add offsets to the table</p> \
+                <p>If fussellage is drawn in z-direction (sideview on yZ-plane), top view should be drawn on xZ-plane (and projected to a surface). x-values should be positive.</p>
+                <p>Other orientations might cause errors. In these cases it might help to use the mirror side of the top view. Other orientations that work are:</p>
+                <p>Fusellage on x-axis topview with pos y-values, sideview on xZ-plane, top with pos z-values</p>
+                <p>Fusselage on y-axis topview with pos x-values, sideview on yZ-plane, top with pos z-values</p>
+
+
+                
+            """
+            tab2ChildInputs.addTextBoxCommandInput('fullWidth_textBox', '', inst_text1, 12, True)
+
 
         except:
             if ui:
