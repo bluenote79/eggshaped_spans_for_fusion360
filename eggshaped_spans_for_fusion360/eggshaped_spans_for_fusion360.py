@@ -284,7 +284,7 @@ class SpanCommandExecuteHandler(adsk.core.CommandEventHandler):
             # execute the calculation programm with the user selected values
             span = Span()
             for i in range(len(l_off)):
-                span.Execute(l_xmax[i], l_xmin[i], l_xmit[i], l_ymax[i], 4 * input4.value, l_off[i], INPUT_ORIENTIERUNG)
+                span.Execute(l_xmax[i], l_xmin[i], l_xmit[i], l_ymax[i], 4 * input4.value, -1 * l_off[i], INPUT_ORIENTIERUNG)
 
         except:
             if ui:
